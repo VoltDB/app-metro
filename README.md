@@ -1,4 +1,4 @@
-# VoltDB Example App: Ad Performance#
+# VoltDB Example App: Metro
 
 Use Case
 --------
