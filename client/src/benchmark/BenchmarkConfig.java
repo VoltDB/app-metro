@@ -59,6 +59,9 @@ public class BenchmarkConfig extends CLIConfig {
     @Option(desc = "Number of Cards")
     int cardcount = 500000;
 
+	@Option(desc = "Filename containing stations and weights.")
+    String stationfilename = "client/data/station_weights.csv";
+
     public BenchmarkConfig() {
     }
 

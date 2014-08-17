@@ -5,76 +5,93 @@ import java.text.SimpleDateFormat;
 import org.voltdb.*;
 import org.voltdb.types.TimestampType;
 
-/** A VoltDB stored procedure is a Java class defining one or
- * more SQL statements and implementing a public
- * VoltTable[] run method. VoltDB requires a
- * ProcInfo annotation providing metadata for the
- * procedure.  The run method is
- * defined to accept one or more parameters. These parameters take the
- * values the client passes via the
- * Client.callProcedure invocation.
- * The VoltDB User Guide (https://community.voltdb.com/documentation) 
- * specifies valid stored procedure definitions,
- * including valid run method parameter types, required annotation
- * metadata, and correct use the Volt query interface.
- */
-
 public class CardSwipe extends VoltProcedure {
 
-    public final SQLStmt checkStmt = new SQLStmt("SELECT * FROM metrocards WHERE card_id = ?;");
+    public final SQLStmt checkCard = new SQLStmt(
+        "SELECT enabled, card_type, balance, expires FROM cards WHERE card_id = ?;");
 
-    public final SQLStmt insertStmt = new SQLStmt("INSERT INTO card_swipes VALUES (?,?,?,?,?,?,?);");
-
-
-    public long run( int           card_id,
-		     TimestampType date_time,
-		     int           location_id
-		     ) throws VoltAbortException {
-
-	long result = 0;
-
-	voltQueueSQL(checkStmt, EXPECT_ZERO_OR_ONE_ROW, card_id);
-	VoltTable check[] = voltExecuteSQL();
+    public final SQLStmt chargeCard = new SQLStmt(
+        "UPDATE cards SET balance = ? WHERE card_id = ?;");
 	
+    public final SQLStmt checkStationFare = new SQLStmt(
+        "SELECT fare FROM stations WHERE station_id = ?;");
 
-	if (check[0].getRowCount() == 0) {
-	    // card was not found
-	    return 0;
-	}
+    public final SQLStmt insertActivity = new SQLStmt(
+        "INSERT INTO activity (card_id, date_time, station_id, activity_code, amount) VALUES (?,?,?,?,?);");
 
-	VoltTableRow card = check[0].fetchRow(0);
-	String status = card.getString(1); // 1 is the index # of the card_status column
-
-	DateFormat df = new SimpleDateFormat("yyyyMMdd");
-	int date_int = Integer.parseInt(df.format(date_time.asApproximateJavaDate()));
-
-	df = new SimpleDateFormat("hh");
-	int hour_int = Integer.parseInt(df.format(date_time.asApproximateJavaDate()));
-
-	int is_green = 0;
-	if (status.equals("green")) {
-	    is_green = 1;
-	    result = 1;
-	}
+	// for returning results as a VoltTable
+	final VoltTable resultTemplate = new VoltTable(
+		new VoltTable.ColumnInfo("card_accepted",VoltType.TINYINT),
+		new VoltTable.ColumnInfo("message",VoltType.STRING));
 	
-	int is_red = 0;
-	if (status.equals("red")) {
-	    is_red = 1;
-	    result = 2;
+	public VoltTable buildResult(int accepted, String msg) {
+		VoltTable r = resultTemplate.clone(64);
+		r.addRow(accepted, msg);
+		return r;
 	}
 
-	voltQueueSQL( insertStmt, 
-		      card_id,
-		      date_time,
-		      date_int,
-		      hour_int,
-		      location_id,
-		      is_green,
-		      is_red);
+	public static String intToCurrency(int i) {
+		return String.format("%d.%02d", i/100, i%100);
+	}
 
-	VoltTable[] retval = voltExecuteSQL(true);
+    public VoltTable run( int cardId,
+                          int stationId
+                          ) throws VoltAbortException {
 
-	return result;
 
+        // check station fare and card status
+        voltQueueSQL(checkCard, EXPECT_ZERO_OR_ONE_ROW, cardId);
+        voltQueueSQL(checkStationFare, EXPECT_ZERO_OR_ONE_ROW, stationId);
+        VoltTable[] checks = voltExecuteSQL();
+        VoltTable cardInfo = checks[0];
+        VoltTable stationInfo = checks[1];
+
+        // check that card exists
+        if (cardInfo.getRowCount() == 0) {
+	        return buildResult(0,"Card Invalid");
+        }
+
+        // card exists, so advanceRow to read the record
+        cardInfo.advanceRow();
+        int enabled = (int)cardInfo.getLong(0);
+        int cardType = (int)cardInfo.getLong(1);
+        int balance = (int)cardInfo.getLong(2);
+        TimestampType expires = cardInfo.getTimestampAsTimestamp(3);
+
+        // read station fare
+        stationInfo.advanceRow();
+        int fare = (int)stationInfo.getLong(0);
+
+        int cardAccepted = 0;
+        String message;
+        int fareCharged = 0;
+        
+        // if card is disabled
+        if (enabled == 0) { 
+	        return buildResult(0,"Card Disabled");
+        }
+
+        // check balance or expiration for valid cards
+        if (cardType == 0) { // pay per ride
+	        if (balance > fare) {
+		        // charge the fare
+		        voltQueueSQL(chargeCard, balance-fare,cardId);
+		        voltQueueSQL(insertActivity, cardId, getTransactionTime(), stationId, 1, fare);
+		        voltExecuteSQL(true);
+		        return buildResult(1,"Remaining Balance: "+intToCurrency(balance-fare));
+	        } else {
+		        // insufficient balance
+		        return buildResult(0,"Card has insufficient balance: "+intToCurrency(balance));
+	        }
+        } else { // unlimited card (e.g. monthly or weekly pass)
+	        if (expires.compareTo(new TimestampType(getTransactionTime())) > 0) {
+		        voltQueueSQL(insertActivity, cardId, getTransactionTime(), stationId, 1, 0);
+		        voltExecuteSQL(true);
+		        return buildResult(1,"Card Expires: " + expires.toString());
+	        } else {
+		        return buildResult(0,"Card Expired");
+	        }
+        }
     }
+
 }

@@ -40,52 +40,56 @@
 ---------------------------------------------------------------------------------
 
 -------------- REPLICATED TABLES ------------------------------------------------
+CREATE TABLE stations(
+  station_id            SMALLINT          NOT NULL,
+  name                  VARCHAR(25 bytes) NOT NULL,
+  fare                  SMALLINT          DEFAULT 250 NOT NULL,
+  CONSTRAINT PK_stations PRIMARY KEY (station_id)
+);
 
 -------------- PARTITIONED TABLES -----------------------------------------------
-CREATE TABLE metrocards(
+CREATE TABLE cards(
   card_id		INTEGER        NOT NULL,
-  card_status		VARCHAR(8)     NOT NULL,
+  enabled               TINYINT        DEFAULT 1 NOT NULL, -- 1=enabled, 0=disabled
+  card_type             TINYINT        DEFAULT 0 NOT NULL, -- 0=pay per ride, 1=unlimited
+  balance               INTEGER        DEFAULT 0, -- implicitly divide by 100 to get currency value
+  expires               TIMESTAMP,  
   CONSTRAINT PK_metrocards_card_id PRIMARY KEY ( card_id )
 );
-PARTITION TABLE metrocards ON COLUMN card_id;
+PARTITION TABLE cards ON COLUMN card_id;
 
-CREATE TABLE card_swipes(
-  card_id		INTEGER        NOT NULL,
-  date_time		TIMESTAMP      NOT NULL,
-  date_int		INTEGER	       NOT NULL,
-  hour_int		INTEGER	       NOT NULL,
-  location_id		INTEGER	       NOT NULL,
-  is_green		TINYINT,
-  is_red		TINYINT  
+CREATE TABLE activity(
+  card_id               INTEGER        NOT NULL,
+  date_time             TIMESTAMP      NOT NULL,
+  station_id            SMALLINT       NOT NULL,
+  activity_code         TINYINT        NOT NULL, -- 1=entry, 2=purchase
+  amount                INTEGER        NOT NULL
 );
-PARTITION TABLE card_swipes ON COLUMN card_id;
-
+PARTITION TABLE activity ON COLUMN card_id;
 
 -------------- VIEWS ------------------------------------------------------------
-CREATE VIEW hourly_swipes_by_location(
-  location_id,
-  date_int,
-  hour_int,
-  total_swipes,
-  total_green,
-  total_red
-) AS
+CREATE VIEW hourly_entries_by_station
+AS
 SELECT
-  location_id,
-  date_int,
-  hour_int,
-  COUNT(*),
-  SUM(is_green),
-  SUM(is_red)
-FROM card_swipes
+  station_id,
+  TRUNCATE(HOUR,date_time) AS hour,
+  COUNT(*) AS activities,
+  COUNT(DECODE(activity_code,1,1)) AS entries,
+  SUM(DECODE(activity_code,1,amount)) AS entry_total,
+  COUNT(DECODE(activity_code,2,1)) AS purchases,
+  SUM(DECODE(activity_code,2,amount)) AS purchase_total
+FROM activity
 GROUP BY
-  location_id,
-  date_int,
-  hour_int;
+  station_id,
+  TRUNCATE(HOUR,date_time);
 
 
 -------------- PROCEDURES -------------------------------------------------------
 
 CREATE PROCEDURE FROM CLASS procedures.CardSwipe;
-PARTITION PROCEDURE CardSwipe ON TABLE card_swipes COLUMN card_id PARAMETER 0;
+PARTITION PROCEDURE CardSwipe ON TABLE cards COLUMN card_id PARAMETER 0;
 
+CREATE PROCEDURE ReplenishCard AS
+UPDATE cards SET balance = balance + ?
+WHERE card_id = ? AND card_type = 0;
+PARTITION PROCEDURE ReplenishCard ON TABLE cards COLUMN card_id PARAMETER 1;

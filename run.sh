@@ -119,7 +119,8 @@ function client() {
         --ratelimit=20000 \
         --autotune=true \
         --latencytarget=1 \
-        --cardcount=500000
+        --cardcount=500000 \
+        --stationfilename=data/station_weights.csv
 
     cd ..
 }
