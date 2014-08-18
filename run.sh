@@ -114,7 +114,7 @@ function client() {
         benchmark.MetroBenchmark \
         --displayinterval=5 \
         --warmup=5 \
-        --duration=120 \
+        --duration=900 \
         --servers=$SERVERS \
         --ratelimit=20000 \
         --autotune=true \
