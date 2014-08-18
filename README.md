@@ -65,11 +65,7 @@ Speed & Duration:
 
 Metadata volumes and ratios:
 
-    --sites=100                   (number of web sites where ad events may occur)
-    --pagespersite=10             (number of pages per web site)
-    --advertisers=100             (number of advertisers)
-    --campaignsperadvertiser=10   (number of campaigns per advertiser)
-    --creativespercampaign=5      (number of creatives or banners per campaign)
+    --cardcount=500000            (number of metro cards created)
 
 
 Instructions for running on a cluster
