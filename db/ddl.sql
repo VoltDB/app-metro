@@ -68,11 +68,11 @@ CREATE TABLE activity(
 PARTITION TABLE activity ON COLUMN card_id;
 
 -------------- VIEWS ------------------------------------------------------------
-CREATE VIEW hourly_entries_by_station
+CREATE VIEW secondly_entries_by_station
 AS
 SELECT
   station_id,
-  TRUNCATE(HOUR,date_time) AS hour,
+  TRUNCATE(SECOND,date_time) AS second,
   COUNT(*) AS activities,
   COUNT(DECODE(activity_code,1,1)) AS entries,
   SUM(DECODE(activity_code,1,amount)) AS entry_total,
@@ -81,7 +81,7 @@ SELECT
 FROM activity
 GROUP BY
   station_id,
-  TRUNCATE(HOUR,date_time);
+  TRUNCATE(SECOND,date_time);
 
 
 -------------- PROCEDURES -------------------------------------------------------
@@ -93,3 +93,19 @@ CREATE PROCEDURE ReplenishCard AS
 UPDATE cards SET balance = balance + ?
 WHERE card_id = ? AND card_type = 0;
 PARTITION PROCEDURE ReplenishCard ON TABLE cards COLUMN card_id PARAMETER 1;
+
+CREATE PROCEDURE GetBusiestStationInLastMinute AS
+SELECT station_id, TRUNCATE(MINUTE, second) AS minute, SUM(activities) AS swipes, SUM(entry_total) AS total_values
+FROM secondly_entries_by_station
+WHERE TRUNCATE(MINUTE, second) = TRUNCATE(MINUTE, NOW)
+GROUP BY station_id, TRUNCATE(MINUTE, second)
+ORDER BY swipes DESC
+LIMIT 10;
+
+CREATE PROCEDURE GetSwipesPerSecond AS
+SELECT second, SUM(activities) AS swipes
+FROM secondly_entries_by_station
+WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, second) + ?) >= TRUNCATE(SECOND, NOW)
+AND second < TRUNCATE(SECOND, NOW) -- skip the current second
+GROUP BY second
+ORDER BY second;
