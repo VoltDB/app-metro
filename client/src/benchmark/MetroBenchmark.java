@@ -12,8 +12,9 @@ public class MetroBenchmark extends BaseBenchmark {
 
 	// for random data generation
 	private RandomCollection<Integer> stations = new RandomCollection<Integer>();
-	int[] balances = {5000,2000,1000,500,250,0};
+	int[] balances = {5000,2000,1000,500};
 	Calendar cal = Calendar.getInstance();
+	int cardCount = 0;
 		
     // constructor
     public MetroBenchmark(BenchmarkConfig config) {
@@ -57,54 +58,65 @@ public class MetroBenchmark extends BaseBenchmark {
         System.out.println("Generating " + config.cardcount + " cards...");
 
         // check if cards already initialized
-        int cardCount = client.callProcedure("@AdHoc","SELECT COUNT(*) FROM cards;").getResults()[0].getRowCount();
-        if (cardCount > 0 && cardCount == config.cardcount)
-	        return;
+        cardCount = client.callProcedure("@AdHoc","SELECT COUNT(*) FROM cards;").getResults()[0].getRowCount();
 
-        for (int i=0; i<config.cardcount; i++) {
-
-	        // default card (pay per fare)
-	        int enabled = 1;		    
-		    int card_type = 0;
-		    int balance = balances[rand.nextInt(balances.length)];
-		    TimestampType expires = null;
-
-		    // disable 1/1000 cards
-		    if (rand.nextInt(1000) == 0)
-			    enabled = 0;
-
-		    // make 1/3 cards unlimited (weekly or monthly pass)
-		    if (rand.nextInt(3) == 0) {
-			    card_type = 1;
-			    balance = 0;
-			    // expired last night at midnight, or any of the next 30 days
-			    Calendar cal2 = (Calendar)cal.clone();
-			    cal2.add(Calendar.DATE,rand.nextInt(30));
-			    expires = new TimestampType(cal2.getTime());
-		    }
-
-	        client.callProcedure(new BenchmarkCallback("CARDS.upsert"),
-                                 "CARDS.upsert",
-                                 i,
-                                 enabled,
-                                 card_type,
-                                 balance,
-                                 expires);
-
-            if (i % 50000 == 0)
+        for (int i=cardCount; i<config.cardcount; i++) {
+	        generateCard();
+            if (i+1 % 50000 == 0)
                 System.out.println("  " + i);
-            
         }
-        System.out.println("  " + config.cardcount);
     }
 
-    public void iterate() throws Exception {
+	public void generateCard() throws Exception {
 
-        // Generate a card swipe
-        int card_id = rand.nextInt(config.cardcount+1000); // use +1000 so sometimes we get an invalid card_id
+		// default card (pay per fare)
+		int enabled = 1;		    
+		int card_type = 0;
+		int balance = balances[rand.nextInt(balances.length)];
+		TimestampType expires = null;
+
+		// disable 1/1000 cards
+		if (rand.nextInt(1000) == 0)
+			enabled = 0;
+
+		// make 1/3 cards unlimited (weekly or monthly pass)
+		if (rand.nextInt(3) == 0) {
+			card_type = 1;
+			balance = 0;
+			// expired last night at midnight, or any of the next 30 days
+			Calendar cal2 = (Calendar)cal.clone();
+			cal2.add(Calendar.DATE,rand.nextInt(30));
+			expires = new TimestampType(cal2.getTime());
+		}
+
+		client.callProcedure(new BenchmarkCallback("CARDS.upsert"),
+		                     "CARDS.upsert",
+		                     ++cardCount,
+		                     enabled,
+		                     card_type,
+		                     balance,
+		                     expires);
+		
+	}
+	
+	public void iterate() throws Exception {
+
+		// sometimes create a new card
+		if (rand.nextInt(25) == 0)
+			generateCard();
+
+		// sometimes replenish a card
+		if (rand.nextInt(8) == 0) {
+			client.callProcedure(new BenchmarkCallback("ReplenishCard"),
+			                     "ReplenishCard",
+			                     balances[rand.nextInt(balances.length)],
+			                     rand.nextInt(cardCount)
+			                     );
+		}
+
+        // card swipe
+        int card_id = rand.nextInt(cardCount+1000); // use +1000 so sometimes we get an invalid card_id
         int station_id = stations.next();
-
-        // call the 
         client.callProcedure(new BenchmarkCallback("CardSwipe"),
                              "CardSwipe",
                              card_id,
