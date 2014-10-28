@@ -113,13 +113,13 @@ function client() {
     java -classpath obj:$CLASSPATH -Dlog4j.configuration=file://$VOLTDB_HOME/voltdb/log4j.xml \
         benchmark.MetroBenchmark \
         --displayinterval=5 \
-        --warmup=5 \
+        --warmup=0 \
         --duration=900 \
         --servers=$SERVERS \
         --ratelimit=20000 \
         --autotune=true \
         --latencytarget=1 \
-        --cardcount=500000 \
+        --cardcount=5000 \
         --stationfilename=data/station_weights.csv
 
     cd ..
