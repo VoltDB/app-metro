@@ -7,6 +7,21 @@ function RefreshData(){
                          DrawTable(response,'#table_minute_station')}
                     );
 
+    var cardid = Math.floor((Math.random() * 1000) + 1);
+    var stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_2')}
+                    );
+
     con.BeginExecute('GetSwipesPerSecond',
                      [30],
                      function(response) {
@@ -30,14 +45,18 @@ function DrawTimeLinesChart(response, placeholder) {
     var tables = response.results;
     var t0 = tables[0];
     var swipes = [];
+    var entries = [];
 
     for(var r=0;r<t0.data.length;r++){ // for each row
         var time = t0.data[r][0]/1000;
         var swipe = t0.data[r][1];
+        var entry = t0.data[r][2];
         swipes.push([time,swipe]);
+        entries.push([time,entry]);
     }
 
     var swipeline = { label: "Swipes", data: swipes };
+    var entryline = { label: "Entries", data: entries };
 
     var options = {
         series: {
@@ -49,7 +68,7 @@ function DrawTimeLinesChart(response, placeholder) {
         legend: { position: 'nw' }
     };
 
-    $.plot($(placeholder), [swipeline], options);
+    $.plot($(placeholder), [swipeline, entryline], options);
 }
 
 

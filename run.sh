@@ -58,7 +58,7 @@ function compile_procedures() {
     mkdir -p db/obj
     CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
     SRC=`find db/src -name "*.java"`
-    if [ ! -z $SRC ]; then
+    if [ ! -z "$SRC" ]; then
 	javac -classpath $CLASSPATH -d db/obj $SRC
         # stop if compilation fails
         if [ $? != 0 ]; then exit; fi
@@ -116,10 +116,10 @@ function client() {
         --warmup=0 \
         --duration=900 \
         --servers=$SERVERS \
-        --ratelimit=20000 \
-        --autotune=true \
+        --ratelimit=25000 \
+        --autotune=false \
         --latencytarget=1 \
-        --cardcount=5000 \
+        --cardcount=50000 \
         --stationfilename=data/station_weights.csv
 
     cd ..
@@ -146,6 +146,7 @@ function demo-compile() {
 }
 
 function demo() {
+    demo-compile
     export DEPLOYMENT=deployment-demo.xml
     nohup_server
     echo "starting client..."

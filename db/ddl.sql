@@ -71,7 +71,22 @@ PARTITION TABLE activity ON COLUMN card_id;
 CREATE VIEW secondly_entries_by_station
 AS
 SELECT
+  TRUNCATE(SECOND,date_time) AS second,
   station_id,
+  COUNT(*) AS activities,
+  COUNT(DECODE(activity_code,1,1)) AS entries,
+  SUM(DECODE(activity_code,1,amount)) AS entry_total,
+  COUNT(DECODE(activity_code,2,1)) AS purchases,
+  SUM(DECODE(activity_code,2,amount)) AS purchase_total
+FROM activity
+GROUP BY
+  TRUNCATE(SECOND,date_time),
+  station_id;
+
+
+CREATE VIEW secondly_stats
+AS
+SELECT
   TRUNCATE(SECOND,date_time) AS second,
   COUNT(*) AS activities,
   COUNT(DECODE(activity_code,1,1)) AS entries,
@@ -80,7 +95,6 @@ SELECT
   SUM(DECODE(activity_code,2,amount)) AS purchase_total
 FROM activity
 GROUP BY
-  station_id,
   TRUNCATE(SECOND,date_time);
 
 
@@ -89,23 +103,12 @@ GROUP BY
 CREATE PROCEDURE FROM CLASS procedures.CardSwipe;
 PARTITION PROCEDURE CardSwipe ON TABLE cards COLUMN card_id PARAMETER 0;
 
+CREATE PROCEDURE FROM CLASS procedures.GetBusiestStationInLastMinute;
+CREATE PROCEDURE FROM CLASS procedures.GetSwipesPerSecond;
+
+
 CREATE PROCEDURE ReplenishCard AS
 UPDATE cards SET balance = balance + ?
 WHERE card_id = ? AND card_type = 0;
 PARTITION PROCEDURE ReplenishCard ON TABLE cards COLUMN card_id PARAMETER 1;
 
-CREATE PROCEDURE GetBusiestStationInLastMinute AS
-SELECT station_id, TRUNCATE(MINUTE, second) AS minute, SUM(activities) AS swipes, SUM(entry_total) AS total_values
-FROM secondly_entries_by_station
-WHERE TRUNCATE(MINUTE, second) = TRUNCATE(MINUTE, NOW)
-GROUP BY station_id, TRUNCATE(MINUTE, second)
-ORDER BY swipes DESC
-LIMIT 10;
-
-CREATE PROCEDURE GetSwipesPerSecond AS
-SELECT second, SUM(activities) AS swipes
-FROM secondly_entries_by_station
-WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, second) + ?) >= TRUNCATE(SECOND, NOW)
-AND second < TRUNCATE(SECOND, NOW) -- skip the current second
-GROUP BY second
-ORDER BY second;

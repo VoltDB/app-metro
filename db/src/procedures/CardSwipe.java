@@ -81,6 +81,8 @@ public class CardSwipe extends VoltProcedure {
 		        return buildResult(1,"Remaining Balance: "+intToCurrency(balance-fare));
 	        } else {
 		        // insufficient balance
+		        voltQueueSQL(insertActivity, cardId, getTransactionTime(), stationId, 0, 0);
+		        voltExecuteSQL(true);
 		        return buildResult(0,"Card has insufficient balance: "+intToCurrency(balance));
 	        }
         } else { // unlimited card (e.g. monthly or weekly pass)
@@ -89,6 +91,8 @@ public class CardSwipe extends VoltProcedure {
 		        voltExecuteSQL(true);
 		        return buildResult(1,"Card Expires: " + expires.toString());
 	        } else {
+		        voltQueueSQL(insertActivity, cardId, getTransactionTime(), stationId, 0, 0);
+		        voltExecuteSQL(true);
 		        return buildResult(0,"Card Expired");
 	        }
         }
