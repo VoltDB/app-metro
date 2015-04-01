@@ -7,6 +7,9 @@ function RefreshData(){
                          DrawTable(response,'#table_minute_station')}
                     );
 
+// begin of code added by Patrice
+  if ((Math.random() * 5)>4) 
+   {
     var cardid = Math.floor((Math.random() * 1000) + 1);
     var stationid = Math.floor((Math.random() * 50) + 1);
     con.BeginExecute('CardSwipe',
@@ -21,6 +24,65 @@ function RefreshData(){
                      function(response) {
                          DrawTable(response,'#table_card_swipe_2')}
                     );
+
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_3')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_4')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_5')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_6')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_7')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_8')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_9')}
+                    );
+    cardid = Math.floor((Math.random() * 1000) + 1);
+    stationid = Math.floor((Math.random() * 50) + 1);
+    con.BeginExecute('CardSwipe',
+                     [cardid,stationid],
+                     function(response) {
+                         DrawTable(response,'#table_card_swipe_10')}
+                    );
+   }
+// end of code added by Patrice
 
     con.BeginExecute('GetSwipesPerSecond',
                      [30],
