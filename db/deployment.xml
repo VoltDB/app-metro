@@ -4,4 +4,13 @@
    <httpd enabled="true">
       <jsonapi enabled="true" />
    </httpd>
+   <dr id="1" listen="true"/>
+      
+   <export>
+     <configuration stream="alertstream" enabled="true" type="file">
+	<property name="type">csv</property>
+	<property name="nonce">AlertExport</property>
+	<property name="period">5</property>
+    </configuration>
+  </export>
 </deployment>

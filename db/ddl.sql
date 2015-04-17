@@ -49,7 +49,7 @@ CREATE TABLE stations(
 
 -------------- PARTITIONED TABLES -----------------------------------------------
 CREATE TABLE cards(
-  card_id		INTEGER        NOT NULL,
+  card_id               INTEGER        NOT NULL,
   enabled               TINYINT        DEFAULT 1 NOT NULL, -- 1=enabled, 0=disabled
   card_type             TINYINT        DEFAULT 0 NOT NULL, -- 0=pay per ride, 1=unlimited
   balance               INTEGER        DEFAULT 0, -- implicitly divide by 100 to get currency value
@@ -66,6 +66,15 @@ CREATE TABLE activity(
   amount                INTEGER        NOT NULL
 );
 PARTITION TABLE activity ON COLUMN card_id;
+
+CREATE TABLE card_alert_export(
+  card_id               INTEGER        NOT NULL,
+  date_time             TIMESTAMP      NOT NULL,
+  station_name          VARCHAR(25)    NOT NULL,
+  activity_code         TINYINT        NOT NULL, -- 1=entry, 2=purchase
+  alert_code            TINYINT        NOT NULL,
+  alert_message         VARCHAR(64)    NOT NULL
+);
 
 -------------- VIEWS ------------------------------------------------------------
 CREATE VIEW secondly_entries_by_station
@@ -112,3 +121,4 @@ UPDATE cards SET balance = balance + ?
 WHERE card_id = ? AND card_type = 0;
 PARTITION PROCEDURE ReplenishCard ON TABLE cards COLUMN card_id PARAMETER 1;
 
+EXPORT TABLE card_alert_export to STREAM alertstream;
