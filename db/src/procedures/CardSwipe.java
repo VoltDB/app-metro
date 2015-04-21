@@ -9,7 +9,7 @@ import org.voltdb.types.TimestampType;
 public class CardSwipe extends VoltProcedure {
 
     public final SQLStmt checkCard = new SQLStmt(
-        "SELECT enabled, card_type, balance, expires FROM cards WHERE card_id = ?;");
+        "SELECT enabled, card_type, balance, expires, name, phone, email, notify FROM cards WHERE card_id = ?;");
 
     public final SQLStmt chargeCard = new SQLStmt(
         "UPDATE cards SET balance = ? WHERE card_id = ?;");
@@ -20,11 +20,12 @@ public class CardSwipe extends VoltProcedure {
     public final SQLStmt insertActivity = new SQLStmt(
         "INSERT INTO activity (card_id, date_time, station_id, activity_code, amount) VALUES (?,?,?,?,?);");
 
-    private Random rand = new Random();
-
     public final SQLStmt exportActivity = new SQLStmt(
-            "INSERT INTO card_alert_export (card_id, date_time, station_name, activity_code, alert_code, alert_message) VALUES (?,?,?,?,?,?);");
-        // for returning results as a VoltTable
+            "INSERT INTO card_alert_export (card_id, date_time, station_name, name, phone, email, notify, alert_message) VALUES (?,?,?,?,?,?,?,?);");
+       
+    private Random rand = new Random();
+    
+    // for returning results as a VoltTable
         final VoltTable resultTemplate = new VoltTable(
                 new VoltTable.ColumnInfo("card_accepted",VoltType.TINYINT),
                 new VoltTable.ColumnInfo("message",VoltType.STRING));
@@ -44,7 +45,7 @@ public class CardSwipe extends VoltProcedure {
                           ) throws VoltAbortException {
 
 
-        // check station fare and card status
+        // check station fare, card status, get card owner's particulars
         voltQueueSQL(checkCard, EXPECT_ZERO_OR_ONE_ROW, cardId);
         voltQueueSQL(checkStationFare, EXPECT_ZERO_OR_ONE_ROW, stationId);
         VoltTable[] checks = voltExecuteSQL();
@@ -62,6 +63,10 @@ public class CardSwipe extends VoltProcedure {
         int cardType = (int)cardInfo.getLong(1);
         int balance = (int)cardInfo.getLong(2);
         TimestampType expires = cardInfo.getTimestampAsTimestamp(3);
+        String owner = (String)cardInfo.getString(4);
+        String phone = (String)cardInfo.getString(5);
+        String email = (String)cardInfo.getString(6);
+        int notify = (int)cardInfo.getLong(7);
 
         // read station fare
         stationInfo.advanceRow();
@@ -89,7 +94,7 @@ public class CardSwipe extends VoltProcedure {
                         // insufficient balance
                         voltQueueSQL(insertActivity, cardId, getTransactionTime(), stationId, 0, 0);
                         if (rand.nextInt(10000) == 6) {
-                            voltQueueSQL(exportActivity,  cardId, getTransactionTime(), stationName, 1, 14, "Insufficient Balance");
+                            voltQueueSQL(exportActivity, cardId, getTransactionTime(), stationName, owner, phone, email, notify, "Insufficient Balance");
                         }
                         voltExecuteSQL(true);
                         return buildResult(0,"Card has insufficient balance: "+intToCurrency(balance));

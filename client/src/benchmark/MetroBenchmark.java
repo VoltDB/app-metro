@@ -75,6 +75,10 @@ public class MetroBenchmark extends BaseBenchmark {
         int enabled = 1;		    
         int card_type = 0;
         int balance = balances[rand.nextInt(balances.length)];
+        String preName = "T Ryder ";
+        String phone = "6174567890";
+        String email = "tryder@gmail.com";
+        int notify = 0;
         TimestampType expires = null;
 
         // disable 1/10000 cards
@@ -97,7 +101,11 @@ public class MetroBenchmark extends BaseBenchmark {
                              enabled,
                              card_type,
                              balance,
-                             expires);
+                             expires,
+                             preName + cardCount, // create synthetic numeric person
+                             phone,
+                             email,
+                             notify);
 		
     }
 	

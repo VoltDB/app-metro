@@ -54,6 +54,10 @@ CREATE TABLE cards(
   card_type             TINYINT        DEFAULT 0 NOT NULL, -- 0=pay per ride, 1=unlimited
   balance               INTEGER        DEFAULT 0, -- implicitly divide by 100 to get currency value
   expires               TIMESTAMP,  
+  name                  VARCHAR(50)    NOT NULL,
+  phone                 VARCHAR(10)    NOT NULL, -- phone number, assumes North America
+  email                 VARCHAR(50)    NOT NULL,
+  notify                TINYINT           DEFAULT 0, -- 0=don't contact, 1=email, 2=text
   CONSTRAINT PK_metrocards_card_id PRIMARY KEY ( card_id )
 );
 PARTITION TABLE cards ON COLUMN card_id;
@@ -71,8 +75,10 @@ CREATE TABLE card_alert_export(
   card_id               INTEGER        NOT NULL,
   date_time             TIMESTAMP      NOT NULL,
   station_name          VARCHAR(25)    NOT NULL,
-  activity_code         TINYINT        NOT NULL, -- 1=entry, 2=purchase
-  alert_code            TINYINT        NOT NULL,
+  name                  VARCHAR(50)    NOT NULL,
+  phone                 VARCHAR(10)    NOT NULL, -- phone number, assumes North America
+  email                 VARCHAR(50)    NOT NULL,
+  notify                TINYINT           DEFAULT 0, -- 0=don't contact, 1=email, 2=text
   alert_message         VARCHAR(64)    NOT NULL
 );
 

@@ -9,7 +9,7 @@
    <export>
      <configuration stream="alertstream" enabled="true" type="http">
         <property name="endpoint">
-          http://10.10.183.124:8080/x?
+          http://10.10.183.124:8082/x
         </property>
         <property name="batch.mode">false</property>
         <property name="method">get</property>
