@@ -69,6 +69,18 @@ public class MetroBenchmark extends BaseBenchmark {
         }
     }
 
+    public int randomizeNotify() throws Exception {
+        // don't notify 90% (0), 5% text (1), 5% email (2)
+        float n = rand.nextFloat();
+        if (n > 0.1) {
+            return(0);
+        }
+        if (n > 0.05) {
+            return(1);
+        }
+        return(2);
+    }
+
     public void generateCard() throws Exception {
 
         // default card (pay per fare)
@@ -78,7 +90,7 @@ public class MetroBenchmark extends BaseBenchmark {
         String preName = "T Ryder ";
         String phone = "6174567890";
         String email = "tryder@gmail.com";
-        int notify = 0;
+        int notify = randomizeNotify();
         TimestampType expires = null;
 
         // disable 1/10000 cards
