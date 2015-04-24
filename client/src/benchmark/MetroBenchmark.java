@@ -70,12 +70,13 @@ public class MetroBenchmark extends BaseBenchmark {
     }
 
     public int randomizeNotify() throws Exception {
-        // don't notify 50% (0), 25% text (1), 25% email (2)
+        // create a small number of text and email notification
+        // preferences, settable via random weighting below
         float n = rand.nextFloat();
-        if (n > 0.5) {
+        if (n > 0.01) {
             return(0);
         }
-        if (n > 0.25) {
+        if (n > 0.005) {
             return(1);
         }
         return(2);

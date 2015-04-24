@@ -51,7 +51,7 @@ def processRow(row):
         notify == 2: text message to phone number
     """
     try:
-        print "Rider %s, \"%s\" at station %s: " % (row["Name"][0], row["AlertMessage"][0], row["StationName"][0]),
+        # print "Rider %s, \"%s\" at station %s: " % (row["Name"][0], row["AlertMessage"][0], row["StationName"][0]),
         if row["Notify"][0] == "1":
             # sendEmail(row["Email"][0])
             updateHTML(ctime(int(row["ExportTime"][0])/1000), row["Name"][0], row["Email"][0], "Complete")
@@ -76,7 +76,7 @@ MAXROWS = 10
 
 def assembleTable():
     """ Create an html page with latest N rows """
-    table = "<html><body><table border=\"1\"><tr><th>Event Time</th><th>Name</th><th>Contact</th><th>Status</th></tr>"
+    table = "<html><body><meta http-equiv=\"refresh\" content=\"5\"><table border=\"1\"><tr><th>Event Time</th><th>Name</th><th>Contact</th><th>Status</th></tr>"
     # print "RowQueue: " + str(rowQueue)
     for r in rowQueue:
         table += r
@@ -116,7 +116,7 @@ def application(environ, start_response):
     If neither, call the `not_found` function.
     """
     path = environ.get('PATH_INFO', '').lstrip('/')
-    print "Path: " + path
+    # print "Path: " + path
     if path in getFuncs:
         return getFuncs[path](environ, start_response)
     return not_found(environ, start_response)

@@ -93,7 +93,7 @@ public class CardSwipe extends VoltProcedure {
                 } else {
                         // insufficient balance
                         voltQueueSQL(insertActivity, cardId, getTransactionTime(), stationId, 0, 0);
-                        if (rand.nextInt(10000) == 6) {
+                        if (notify != 0) {  // only export in notify is 1 or 2 -- email or text
                             voltQueueSQL(exportActivity, cardId, getTransactionTime().getTime(), stationName, owner, phone, email, notify, "Insufficient Balance");
                         }
                         voltExecuteSQL(true);
