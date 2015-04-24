@@ -116,7 +116,7 @@ function client() {
         --warmup=0 \
         --duration=300 \
         --servers=$SERVERS \
-        --ratelimit=25000 \
+        --ratelimit=250000 \
         --autotune=false \
         --latencytarget=1 \
         --cardcount=50000 \
