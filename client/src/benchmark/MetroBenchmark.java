@@ -70,12 +70,12 @@ public class MetroBenchmark extends BaseBenchmark {
     }
 
     public int randomizeNotify() throws Exception {
-        // don't notify 90% (0), 5% text (1), 5% email (2)
+        // don't notify 50% (0), 25% text (1), 25% email (2)
         float n = rand.nextFloat();
-        if (n > 0.1) {
+        if (n > 0.5) {
             return(0);
         }
-        if (n > 0.05) {
+        if (n > 0.25) {
             return(1);
         }
         return(2);

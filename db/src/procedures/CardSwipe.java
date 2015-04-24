@@ -21,7 +21,7 @@ public class CardSwipe extends VoltProcedure {
         "INSERT INTO activity (card_id, date_time, station_id, activity_code, amount) VALUES (?,?,?,?,?);");
 
     public final SQLStmt exportActivity = new SQLStmt(
-            "INSERT INTO card_alert_export (card_id, date_time, station_name, name, phone, email, notify, alert_message) VALUES (?,?,?,?,?,?,?,?);");
+            "INSERT INTO card_alert_export (card_id, export_time, station_name, name, phone, email, notify, alert_message) VALUES (?,?,?,?,?,?,?,?);");
        
     private Random rand = new Random();
     
@@ -94,7 +94,7 @@ public class CardSwipe extends VoltProcedure {
                         // insufficient balance
                         voltQueueSQL(insertActivity, cardId, getTransactionTime(), stationId, 0, 0);
                         if (rand.nextInt(10000) == 6) {
-                            voltQueueSQL(exportActivity, cardId, getTransactionTime(), stationName, owner, phone, email, notify, "Insufficient Balance");
+                            voltQueueSQL(exportActivity, cardId, getTransactionTime().getTime(), stationName, owner, phone, email, notify, "Insufficient Balance");
                         }
                         voltExecuteSQL(true);
                         return buildResult(0,"Card has insufficient balance: "+intToCurrency(balance));

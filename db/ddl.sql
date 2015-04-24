@@ -73,7 +73,7 @@ PARTITION TABLE activity ON COLUMN card_id;
 
 CREATE TABLE card_alert_export(
   card_id               INTEGER        NOT NULL,
-  date_time             TIMESTAMP      NOT NULL,
+  export_time           BIGINT         NOT NULL,
   station_name          VARCHAR(25)    NOT NULL,
   name                  VARCHAR(50)    NOT NULL,
   phone                 VARCHAR(10)    NOT NULL, -- phone number, assumes North America
