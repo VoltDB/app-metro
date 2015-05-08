@@ -81,7 +81,14 @@ function init() {
     fi
     sqlcmd < db/ddl.sql
 }
-    
+
+function init-export() {
+    if [ "$COMPILE" == "true" ]; then
+        echo "Compiling procedures"
+        compile_procedures
+    fi
+    sqlcmd < db/ddl-export.sql
+}
 
 function nohup_server() {
     # run the server
@@ -90,6 +97,11 @@ function nohup_server() {
 
 function cluster-server() {
     export DEPLOYMENT=deployment-cluster.xml
+    server
+}
+
+function export-server() {
+    export DEPLOYMENT=deployment-export.xml
     server
 }
 
