@@ -81,6 +81,7 @@ CREATE TABLE card_alert_export(
   notify                TINYINT           DEFAULT 0, -- 0=don't contact, 1=email, 2=text
   alert_message         VARCHAR(64)    NOT NULL
 );
+PARTITION TABLE card_alert_export ON COLUMN card_id;
 
 -------------- VIEWS ------------------------------------------------------------
 CREATE VIEW secondly_entries_by_station
@@ -114,9 +115,10 @@ GROUP BY
 
 
 -------------- PROCEDURES -------------------------------------------------------
+LOAD CLASSES db/metro.jar;
 
-CREATE PROCEDURE FROM CLASS procedures.CardSwipe;
-PARTITION PROCEDURE CardSwipe ON TABLE cards COLUMN card_id PARAMETER 0;
+CREATE PROCEDURE PARTITION ON TABLE cards COLUMN card_id PARAMETER 0 FROM CLASS procedures.CardSwipe;
+-- PARTITION PROCEDURE CardSwipe ON TABLE cards COLUMN card_id PARAMETER 0;
 
 CREATE PROCEDURE FROM CLASS procedures.GetBusiestStationInLastMinute;
 CREATE PROCEDURE FROM CLASS procedures.GetSwipesPerSecond;

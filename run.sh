@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 
+set -x
+
 # VoltDB variables
 APPNAME="metro"
 HOST=localhost
 DEPLOYMENT=deployment.xml
+COMPILE="true"
 
 # WEB SERVER variables
 WEB_PORT=8081
 
 # CLIENT variables
 SERVERS=localhost
-
 
 # Get the PID from PIDFILE if we don't have one yet.
 if [[ -z "${PID}" && -e web/http.pid ]]; then
@@ -19,9 +21,10 @@ fi
 
 # This script assumes voltdb/bin is in your path
 VOLTDB_HOME=$(dirname $(dirname "$(which voltdb)"))
+CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
+CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
 
 LICENSE="$VOLTDB_HOME/voltdb/license.xml"
-
 
 # remove non-source files
 function clean() {
@@ -56,21 +59,10 @@ function stop_web() {
 # compile any java stored procedures
 function compile_procedures() {
     mkdir -p db/obj
-    CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
-    SRC=`find db/src -name "*.java"`
-    if [ ! -z "$SRC" ]; then
-	javac -classpath $CLASSPATH -d db/obj $SRC
-        # stop if compilation fails
-        if [ $? != 0 ]; then exit; fi
-    fi
-}
-
-# build an application catalog
-function catalog() {
-    compile_procedures
-    voltdb compile --classpath db/obj -o db/$APPNAME.jar db/ddl.sql
+    javac -classpath $CLASSPATH -d db/obj db/src/procedures/*.java
     # stop if compilation fails
     if [ $? != 0 ]; then exit; fi
+    jar cvf db/metro.jar -C db/obj procedures
 }
 
 # run the voltdb server locally
@@ -82,11 +74,18 @@ function server() {
     tail -f db/nohup.log
 }
 
+function init() {
+    if [ "$COMPILE" == "true" ]; then
+        echo "Compiling procedures"
+        compile_procedures
+    fi
+    sqlcmd < db/ddl.sql
+}
+    
+
 function nohup_server() {
-    # if a catalog doesn't exist, build one
-    if [ ! -f db/$APPNAME.jar ]; then catalog; fi
     # run the server
-    nohup voltdb create -d db/$DEPLOYMENT -l $LICENSE -H $HOST db/$APPNAME.jar > db/nohup.log 2>&1 &
+    nohup voltdb create -d db/$DEPLOYMENT -l $LICENSE -H $HOST > db/nohup.log 2>&1 &
 }
 
 function cluster-server() {
@@ -94,18 +93,17 @@ function cluster-server() {
     server
 }
 
-# update catalog on a running database
+# update a running database
 function update() {
-    catalog
     voltadmin update $APPNAME.jar deployment.xml
 }
 
 function client() {
     # if the class files don't exist, compile the client
-    if [ ! -d client/obj ]; then compile-client; fi
+    if [ ! -d client/obj -o $COMPILE == "true" ]; then compile-client; fi
 
-    CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
-    CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
+    # CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
+    # CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
 
     cd client
 
@@ -126,22 +124,19 @@ function client() {
 }
 
 function compile-client() {
-    CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
-    CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
-
-    pushd client
     # compile client
+    pushd client
     mkdir -p obj
-    SRC=`find src -name "*.java"`
-    javac -Xlint:unchecked -classpath $CLASSPATH -d obj $SRC
+ 
+    javac -Xlint:unchecked -classpath $CLASSPATH -d obj src/benchmark/*.java
     # stop if compilation fails
     if [ $? != 0 ]; then exit; fi
+    # jar cvf client
     popd
 }
 
-# compile the catalog and client code
+# compile the client code
 function demo-compile() {
-    catalog
     compile-client
 }
 
@@ -155,7 +150,7 @@ function demo() {
 }
 
 function help() {
-    echo "Usage: ./run.sh {demo|server|client|catalog|clean}"
+    echo "Usage: ./run.sh {demo|server|client|init|clean}"
 }
 
 # Run the target passed as the first arg on the command line
