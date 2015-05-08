@@ -118,8 +118,6 @@ GROUP BY
 LOAD CLASSES db/metro.jar;
 
 CREATE PROCEDURE PARTITION ON TABLE cards COLUMN card_id PARAMETER 0 FROM CLASS procedures.CardSwipe;
--- PARTITION PROCEDURE CardSwipe ON TABLE cards COLUMN card_id PARAMETER 0;
-
 CREATE PROCEDURE FROM CLASS procedures.GetBusiestStationInLastMinute;
 CREATE PROCEDURE FROM CLASS procedures.GetSwipesPerSecond;
 
