@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -x
+# set -x
 
 # VoltDB variables
 APPNAME="metro"
@@ -82,14 +82,6 @@ function init() {
     sqlcmd < db/ddl.sql
 }
 
-function init-export() {
-    if [ "$COMPILE" == "true" ]; then
-        echo "Compiling procedures"
-        compile_procedures
-    fi
-    sqlcmd < db/ddl-export.sql
-}
-
 function nohup_server() {
     # run the server
     nohup voltdb create -d db/$DEPLOYMENT -l $LICENSE -H $HOST > db/nohup.log 2>&1 &
@@ -153,16 +145,20 @@ function demo-compile() {
 }
 
 function demo() {
+    echo "compiling sources..."
     demo-compile
     export DEPLOYMENT=deployment-demo.xml
+    echo "starting VoltDB server..."
     nohup_server
-    echo "starting client..."
     sleep 10
+    echo "initializing..."
+    init
+    echo "starting client..."
     client
 }
 
 function help() {
-    echo "Usage: ./run.sh {demo|server|client|init|clean}"
+    echo "Usage: ./run.sh {demo|server|export-server|update|client|init|clean}"
 }
 
 # Run the target passed as the first arg on the command line
