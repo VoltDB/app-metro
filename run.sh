@@ -97,17 +97,9 @@ function export-server() {
     server
 }
 
-# update a running database
-function update() {
-    voltadmin update $APPNAME.jar deployment.xml
-}
-
 function client() {
     # if the class files don't exist, compile the client
     if [ ! -d client/obj -o $COMPILE == "true" ]; then compile-client; fi
-
-    # CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
-    # CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
 
     cd client
 
@@ -158,7 +150,7 @@ function demo() {
 }
 
 function help() {
-    echo "Usage: ./run.sh {demo|server|export-server|update|client|init|clean}"
+    echo "Usage: ./run.sh {demo|server|export-server|client|init|clean}"
 }
 
 # Run the target passed as the first arg on the command line
