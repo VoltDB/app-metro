@@ -16,7 +16,7 @@ The code is divided into projects:
 - "db": the database project, which contains the schema, stored procedures and other configurations that are compiled into a catalog and run in a VoltDB database.  
 - "client": a java client that loads a set of cards and then generates random card transactions a high velocity to simulate card activity.
 - "web": a web dashboard client (static html page with dynamic content)
-- "exportWebSertver": a Python-based webserver configured to receive exported rows and provide, as an additional endpoint, a rolling display of the last 10 exported rows
+- "exportWebServer": a Python-based webserver configured to receive exported rows and provide, as an additional endpoint, a rolling display of the last 10 exported rows
 
 See below for instructions on running these applications.  For any questions, 
 please contact fieldengineering@voltdb.com.
@@ -25,7 +25,7 @@ Pre-requisites
 --------------
 Before running these scripts you need to have VoltDB 5.0 (Enterprise or Community) or later installed, and you should add the voltdb-$(VERSION)/bin directory to your PATH environment variable, for example:
 
-    export PATH="$PATH:$HOME/voltdb-ent-5.2EA1/bin"
+    export PATH="$PATH:$HOME/voltdb-ent-5.2.1/bin"
 
 
 Demo Instructions
