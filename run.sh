@@ -15,8 +15,14 @@ WEB_PORT=8081
 SERVERS=localhost
 
 # Get the PID from PIDFILE if we don't have one yet.
+PID=`pgrep -f SimpleHTTPServer`
 if [[ -z "${PID}" && -e web/http.pid ]]; then
   PID=$(cat web/http.pid);
+fi
+
+EXPORTPID=`pgrep -f exportServer.py`
+if [[ -z "${EXPORTPID}" && -e web/exporthttp.pid ]]; then
+  PID=$(cat web/exporthttp.pid);
 fi
 
 # This script assumes voltdb/bin is in your path
@@ -55,6 +61,30 @@ function stop_web() {
       echo "stopped http server (PID: ${PID})."
   fi
 }
+
+
+function start_export_web() {
+    if [[ -z "${EXPORTPID}" ]]; then
+        cd exportWebServer
+        nohup python exportServer.py > exporthttp.log 2>&1 &
+        echo $! > exporthttp.pid
+        cd ..
+        echo "started export http server"
+    else
+        echo "export http server is already running (PID: ${PID})"
+    fi
+}
+
+function stop_export_web() {
+  if [[ -z "${EXPORTPID}" ]]; then
+    echo "export http server is not running (missing PID)."
+  else
+      kill ${EXPORTPID}
+      rm exportWebServer/exporthttp.pid
+      echo "stopped export http server (PID: ${EXPORTPID})."
+  fi
+}
+
 
 # compile any java stored procedures
 function compile_procedures() {
@@ -150,10 +180,10 @@ function demo() {
 }
 
 function help() {
-    echo "Usage: ./run.sh {demo|server|export-server|client|init|clean}"
+    echo "Usage: ./run.sh {start_web|stop_web|start_export_web|stop_export_web|demo|server|export-server|client|init|clean}"
 }
 
 # Run the target passed as the first arg on the command line
-# If no first arg, run server
+# If no first arg, run help
 if [ $# -gt 1 ]; then help; exit; fi
-if [ $# = 1 ]; then $1; else server; fi
+if [ $# = 1 ]; then $1; else help; fi

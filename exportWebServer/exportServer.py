@@ -36,7 +36,11 @@
 import sys, os
 from time import ctime
 from urlparse import parse_qs
-from twilio.rest import TwilioRestClient
+try:
+    from twilio.rest import TwilioRestClient
+except ImportError:
+    raise ImportError("Add Twilio module if you want to try sending text or email messages on export \"alerts\"\nOtherwise remove this import and method below.")
+
 from wsgiref.simple_server import make_server
  
 def checkPhoneNum(phone):
@@ -147,7 +151,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and "port" in sys.argv[1]:
         port = sys.argv[1].split("=")[1]
     else:
-        port = 8082
+        port = 8083
     try:
         httpd = make_server('', int(port), application)
         print('Serving on port %s...' % str(port))

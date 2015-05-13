@@ -7,6 +7,8 @@ This application performs high velocity transaction processing for metro cards. 
 - Card generation (during the initialization)
 - Card Swipes (during the benchmark)
 
+Optionally, the project can export data using the HTTP connector. There's a simple webserver included that acts as destination for the exported rows of data.
+
 Code organization
 -----------------
 The code is divided into projects:
@@ -14,15 +16,16 @@ The code is divided into projects:
 - "db": the database project, which contains the schema, stored procedures and other configurations that are compiled into a catalog and run in a VoltDB database.  
 - "client": a java client that loads a set of cards and then generates random card transactions a high velocity to simulate card activity.
 - "web": a web dashboard client (static html page with dynamic content)
+- "exportWebSertver": a Python-based webserver configured to receive exported rows and provide, as an additional endpoint, a rolling display of the last 10 exported rows
 
 See below for instructions on running these applications.  For any questions, 
 please contact fieldengineering@voltdb.com.
 
 Pre-requisites
 --------------
-Before running these scripts you need to have VoltDB 4.0 (Enterprise or Community) or later installed, and you should add the voltdb-$(VERSION)/bin directory to your PATH environment variable, for example:
+Before running these scripts you need to have VoltDB 5.0 (Enterprise or Community) or later installed, and you should add the voltdb-$(VERSION)/bin directory to your PATH environment variable, for example:
 
-    export PATH="$PATH:$HOME/voltdb-ent-4.0.2/bin"
+    export PATH="$PATH:$HOME/voltdb-ent-5.2EA1/bin"
 
 
 Demo Instructions
@@ -77,18 +80,37 @@ Before running this demo on a cluster, make the following changes:
     
     HOST=voltserver01
     
-2. On each server, edit db/deployment.xml to change hostcount from 1 to the actual number of servers:
+2. On each server, start the database after starting the web server as in step 1 above:
 
-    <cluster hostcount="1" sitesperhost="3" kfactor="0" />
-
-4. On each server, start the database
-
-	./run.sh server
+	./run.sh cluster-server
     
-5. On one server, Edit the run.sh script to set the SERVERS variable to a comma-separated list of the servers in the cluster
+3. On one server, Edit the run.sh script to set the SERVERS variable to a comma-separated list of the servers in the cluster
 
     SERVERS=voltserver01,voltserver02,voltserver03
     
-6. Run the client script:
+4. Run the client script:
 
 	./run.sh client
+
+Instructions for running with HTTP export
+-----------------------------------------
+
+Here we run the VoltDB database configured to export rows to an HTTP destination, based on conditions set in the stored procedure, CardSwipe. See CardSwipe.java for more details.
+
+1. Start the app-metro dashboard, and browse to it on http://localhost:8081, or some other URL depending on your configuration:
+    ./run.sh start_web <port number>
+
+2. Start the export web server:
+    ./run.sh start_export_web
+
+   Exported rows can be viewed in the command line output from the web service.
+
+3. Start the VoltDB server:
+    ./run.sh export-server
+
+4. Start the client script:
+    ./run.sh client
+
+Browse to http://localhost:8081 to see the app-metro dashboard.
+
+Browse to http://localhost:8083/htmlRows to view a continuously refreshing view of the last 10 exported rows.
