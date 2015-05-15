@@ -49,11 +49,15 @@ CREATE TABLE stations(
 
 -------------- PARTITIONED TABLES -----------------------------------------------
 CREATE TABLE cards(
-  card_id		INTEGER        NOT NULL,
+  card_id               INTEGER        NOT NULL,
   enabled               TINYINT        DEFAULT 1 NOT NULL, -- 1=enabled, 0=disabled
   card_type             TINYINT        DEFAULT 0 NOT NULL, -- 0=pay per ride, 1=unlimited
   balance               INTEGER        DEFAULT 0, -- implicitly divide by 100 to get currency value
   expires               TIMESTAMP,  
+  name                  VARCHAR(50)    NOT NULL,
+  phone                 VARCHAR(10)    NOT NULL, -- phone number, assumes North America
+  email                 VARCHAR(50)    NOT NULL,
+  notify                TINYINT           DEFAULT 0, -- 0=don't contact, 1=email, 2=text
   CONSTRAINT PK_metrocards_card_id PRIMARY KEY ( card_id )
 );
 PARTITION TABLE cards ON COLUMN card_id;
@@ -66,6 +70,18 @@ CREATE TABLE activity(
   amount                INTEGER        NOT NULL
 );
 PARTITION TABLE activity ON COLUMN card_id;
+
+CREATE TABLE card_alert_export(
+  card_id               INTEGER        NOT NULL,
+  export_time           BIGINT         NOT NULL,
+  station_name          VARCHAR(25)    NOT NULL,
+  name                  VARCHAR(50)    NOT NULL,
+  phone                 VARCHAR(10)    NOT NULL, -- phone number, assumes North America
+  email                 VARCHAR(50)    NOT NULL,
+  notify                TINYINT           DEFAULT 0, -- 0=don't contact, 1=email, 2=text
+  alert_message         VARCHAR(64)    NOT NULL
+);
+PARTITION TABLE card_alert_export ON COLUMN card_id;
 
 -------------- VIEWS ------------------------------------------------------------
 CREATE VIEW secondly_entries_by_station
@@ -99,10 +115,9 @@ GROUP BY
 
 
 -------------- PROCEDURES -------------------------------------------------------
+LOAD CLASSES db/metro.jar;
 
-CREATE PROCEDURE FROM CLASS procedures.CardSwipe;
-PARTITION PROCEDURE CardSwipe ON TABLE cards COLUMN card_id PARAMETER 0;
-
+CREATE PROCEDURE PARTITION ON TABLE cards COLUMN card_id PARAMETER 0 FROM CLASS procedures.CardSwipe;
 CREATE PROCEDURE FROM CLASS procedures.GetBusiestStationInLastMinute;
 CREATE PROCEDURE FROM CLASS procedures.GetSwipesPerSecond;
 
@@ -112,3 +127,4 @@ UPDATE cards SET balance = balance + ?
 WHERE card_id = ? AND card_type = 0;
 PARTITION PROCEDURE ReplenishCard ON TABLE cards COLUMN card_id PARAMETER 1;
 
+EXPORT TABLE card_alert_export to STREAM alertstream;

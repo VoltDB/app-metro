@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<deployment>
+   <cluster hostcount="1" sitesperhost="8" kfactor="0" />
+   <httpd enabled="true">
+      <jsonapi enabled="true" />
+   </httpd>
+   <dr id="1" listen="true"/>
+      
+   <export>
+     <configuration stream="alertstream" enabled="true" type="http">
+        <property name="endpoint">
+          http://localhost:8082/exportRows
+        </property>
+        <property name="batch.mode">false</property>
+        <property name="method">get</property>
+    </configuration>
+  </export>
+</deployment>

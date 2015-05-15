@@ -69,12 +69,29 @@ public class MetroBenchmark extends BaseBenchmark {
         }
     }
 
+    public int randomizeNotify() throws Exception {
+        // create a small number of text and email notification
+        // preferences, settable via random weighting below
+        float n = rand.nextFloat();
+        if (n > 0.01) {
+            return(0);
+        }
+        if (n > 0.005) {
+            return(1);
+        }
+        return(2);
+    }
+
     public void generateCard() throws Exception {
 
         // default card (pay per fare)
         int enabled = 1;		    
         int card_type = 0;
         int balance = balances[rand.nextInt(balances.length)];
+        String preName = "T Ryder ";
+        String phone = "6174567890";
+        String email = "tryder@gmail.com";
+        int notify = randomizeNotify();
         TimestampType expires = null;
 
         // disable 1/10000 cards
@@ -97,7 +114,11 @@ public class MetroBenchmark extends BaseBenchmark {
                              enabled,
                              card_type,
                              balance,
-                             expires);
+                             expires,
+                             preName + cardCount, // create synthetic numeric person
+                             phone,
+                             email,
+                             notify);
 		
     }
 	
